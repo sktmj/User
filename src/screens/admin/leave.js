@@ -9,23 +9,19 @@ import { useNavigation } from "@react-navigation/native";
 
 const Leave = () => {
   const Navigation = useNavigation();
-  const modes = ['Mode1', 'Mode2', 'Mode3'];
-  const leaveTypes = ['Sick Leave', 'Vacation', 'Maternity Leave'];
-  const priorities = ['High', 'Medium', 'Low'];
-  const returnTypes = ['Email', 'Hard Copy'];
-  const handOverTo = ['Colleague1', 'Colleague2', 'Colleague3'];
-  const reasons = ['Reason1', 'Reason2', 'Reason3'];
+  
   const [mode, setMode] = useState('');
   const [leaveType, setLeaveType] = useState('');
   const [priority, setPriority] = useState('');
   const [returnType, setReturnType] = useState('');
-  const [handOverToValue, setHandOverToValue] = useState('');
+  const [handOver, setHandOver] = useState([]);
+  const [selectHandOver, setSelectHandOver] = useState('');
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [isFromDatePickerVisible, setFromDatePickerVisibility] = useState(false);
   const [isToDatePickerVisible, setToDatePickerVisibility] = useState(false);
   const [reason, setReason] = useState('');
-  const [leave,setLeave]=useState([])
+  const [leaveReasons, setLeaveReasons] = useState([]);
   const [remark, setRemark] = useState('');
   const [documentUri, setDocumentUri] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,12 +46,13 @@ const Leave = () => {
   useEffect(() => {
     if (tokenFactoryId) {
       fetchRequestDetails(tokenFactoryId);
+      fetchHandOver(tokenFactoryId);
     }
   }, [tokenFactoryId]);
 
-  useEffect(()=>{
+  useEffect(() => {
     getLeave();
-  },[])
+  }, []);
 
   const checkAuthentication = async () => {
     try {
@@ -80,7 +77,7 @@ const Leave = () => {
     try {
       const EmployeeId = await AsyncStorage.getItem('EmployeeId');
       const response = await axios.get(
-        `http://10.0.2.2:3000/api/v2/lve/organistionId/${EmployeeId}`,
+        `http://hrm.daivel.in:3000/api/v2/lve/organistionId/${EmployeeId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -105,7 +102,7 @@ const Leave = () => {
       const EmployeeId = await AsyncStorage.getItem('EmployeeId');
   
       const response = await axios.get(
-        `http://10.0.2.2:3000/api/v2/lve/employeId/${EmployeeId}`,
+        `http://hrm.daivel.in:3000/api/v2/lve/employeId/${EmployeeId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -128,7 +125,7 @@ const Leave = () => {
     const FactoryId = await AsyncStorage.getItem('FactoryId');
     try {
       const response = await axios.get(
-        `http://10.0.2.2:3000/api/v2/lve/request/${FactoryId}`,
+        `http://hrm.daivel.in:3000/api/v2/lve/request/${FactoryId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -138,7 +135,7 @@ const Leave = () => {
       );
       console.log('Request Details Response:', response.data);
       if (response.data.length > 0) {
-        setRequestToNames(response.data.map(item => item.Employee));
+        setRequestToNames(response.data); // Store entire employee objects
       } else {
         console.error('Request names retrieval failed:', response.data.message);
       }
@@ -146,17 +143,39 @@ const Leave = () => {
       console.error('Error fetching request names:', error.response ? error.response.data : error.message);
     }
   };
+  
+  const fetchHandOver = async (tokenFactoryId) => {
+    const FactoryId = await AsyncStorage.getItem('FactoryId');
+    try {
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/request/${FactoryId}`, // Assuming this is the endpoint for handOver
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokenFactoryId}`,
+          },
+        }
+      );
+      console.log('Hand Over Response:', response.data);
+      if (response.data.length > 0) {
+        setHandOver(response.data); // Store entire employee objects
+      } else {
+        console.error('Hand Over names retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching hand over names:', error.response ? error.response.data : error.message);
+    }
+  };
 
   const getLeave = async () => {
     try {
-      const response = await axios.get('http://10.0.2.2:3000/api/v2/lve/getleave');
+      const response = await axios.get('http://hrm.daivel.in:3000/api/v2/lve/getleave');
       console.log('Fetched Leave Reasons:', response.data); // Check the data structure here
-      setLeave(response.data);
+      setLeaveReasons(response.data);
     } catch (error) {
       console.error('Error fetching leave reasons:', error);
     }
   };
-
 
   const pickDocument = async () => {
     try {
@@ -173,8 +192,44 @@ const Leave = () => {
     }
   };
 
-  const saveLeaveRequest = () => {
-    console.log('Leave request saved!');
+  const saveLeaveRequest = async () => {
+    try {
+      const token = await AsyncStorage.getItem('EmployeeId'); // Replace 'Token' with your actual token key
+
+      const formData = {
+        TrnDate: new Date().toISOString().split('T')[0], // Current date
+        TrnMode: mode,
+        ReturnSts: returnType,
+        ModeType: mode,
+        HandOverTo: selectHandOver,
+        RequestTo: selectedRequestTo,
+        Priority: priority,
+        LeaveType: leaveType,
+        FromDate: fromDate,
+        ToDate: toDate,
+        Reason: reason,
+        Remarks: remark,
+        UserId:  await AsyncStorage.getItem('EmployeeId'),
+        ApproveStatus: 'N',
+      };
+
+      const response = await axios.post('http://hrm.daivel.in:3000/api/v2/lve/inserLeave', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        alert('Leave request submitted successfully!');
+        // Optionally, clear the form or redirect the user
+      } else {
+        alert('Failed to submit leave request: ' + response.data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting leave request:', error);
+      alert('Error submitting leave request: ' + error.message);
+    }
   };
 
   const showFromDatePicker = () => {
@@ -197,6 +252,14 @@ const Leave = () => {
   const hideToDatePicker = () => {
     setToDatePickerVisibility(false);
   };
+
+  const handleRequestToChange = (itemValue) => {
+    setSelectedRequestTo(Number(itemValue)); // Convert to number
+  };
+
+  const handleHandOverToChange =(itemValue)=>{
+    setSelectHandOver(Number(itemValue))
+  }
 
   const handleToDateConfirm = (date) => {
     setToDate(date.toISOString().split('T')[0]);
@@ -224,64 +287,76 @@ const Leave = () => {
           />
         </View>
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Request TO</Text>
-          <Picker
-            selectedValue={selectedRequestTo}
-            onValueChange={(itemValue) => setSelectedRequestTo(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select Request To" value="" />
-            {requestToNames.map((name, index) => (
-              <Picker.Item key={index} label={name} value={name} />
-            ))}
-          </Picker>
-        </View>
+  <Text style={styles.label}>Request TO</Text>
+  <Picker
+    selectedValue={selectedRequestTo}
+    onValueChange={(itemValue) => setSelectedRequestTo(itemValue)}
+    style={styles.picker}
+  >
+    <Picker.Item label="Select Request To" value="" />
+    {requestToNames.map((employee) => (
+      <Picker.Item key={employee.EmployeeId} label={employee.Employee} value={employee.EmployeeId} />
+    ))}
+  </Picker>
+</View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Return Type</Text>
           <Picker
-                style={styles.picker}
-              >
-                <Picker.Item label="Non Return" value="N" />
-                <Picker.Item label="Return" value="R" />
-              </Picker>
+            selectedValue={returnType}
+            onValueChange={(itemValue) => setReturnType(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Non Return" value="N" />
+            <Picker.Item label="Return" value="R" />
+          </Picker>
         </View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Mode Type</Text>
-          <Picker style={styles.picker} >
-                <Picker.Item label="Leave" value="L" />
-                <Picker.Item label="Permission" value="P" />
-                
-              </Picker>
+          <Picker
+            selectedValue={mode}
+            onValueChange={(itemValue) => setMode(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Leave" value="L" />
+            <Picker.Item label="Permission" value="P" />
+          </Picker>
         </View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Leave Type</Text>
-          <Picker style={styles.picker} >
-                <Picker.Item label="Full Day" value="F" />
-                <Picker.Item label="Morning" value="M" />
-                <Picker.Item label="AfterNoon" value="A" />
-              </Picker>
+          <Picker
+            selectedValue={leaveType}
+            onValueChange={(itemValue) => setLeaveType(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Full Day" value="F" />
+            <Picker.Item label="Morning" value="M" />
+            <Picker.Item label="Afternoon" value="A" />
+          </Picker>
         </View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Priority</Text>
-          <Picker style={styles.picker} >
-                <Picker.Item label="Normal" value="N" />
-                <Picker.Item label="Urgent" value="U" />
-              </Picker>
-        </View>
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Hand Over To</Text>
           <Picker
-            selectedValue={selectedRequestTo}
-            onValueChange={(itemValue) => setSelectedRequestTo(itemValue)}
+            selectedValue={priority}
+            onValueChange={(itemValue) => setPriority(itemValue)}
             style={styles.picker}
           >
-            <Picker.Item label="Select Request To" value="" />
-            {requestToNames.map((name, index) => (
-              <Picker.Item key={index} label={name} value={name} />
-            ))}
+            <Picker.Item label="Normal" value="N" />
+            <Picker.Item label="Urgent" value="U" />
           </Picker>
         </View>
-
+        <View style={styles.formGroup}>
+  <Text style={styles.label}>Hand Over To</Text>
+  <Picker
+    selectedValue={selectHandOver}
+    onValueChange={(itemValue) => setSelectHandOver(itemValue)}
+    style={styles.picker}
+  >
+    <Picker.Item label="Select Hand Over To" value="" />
+    {handOver.map((employee) => (
+      <Picker.Item key={employee.EmployeeId} label={employee.Employee} value={employee.EmployeeId} />
+    ))}
+  </Picker>
+</View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>From Date</Text>
           <TouchableOpacity onPress={showFromDatePicker}>
@@ -316,20 +391,19 @@ const Leave = () => {
             onCancel={hideToDatePicker}
           />
         </View>
-       
         <View style={styles.formGroup}>
-  <Text style={styles.label}>Reason</Text>
-  <Picker
-    selectedValue={reason}
-    onValueChange={(itemValue) => setReason(itemValue)}
-    style={styles.picker}
-  >
-    <Picker.Item label="Select Reason" value="" />
-    {leave.map((leaveItem, index) => (
-      <Picker.Item key={index} label={leaveItem.Reason} value={leaveItem.ReasonId} />
-    ))}
-  </Picker>
-</View>
+          <Text style={styles.label}>Reason</Text>
+          <Picker
+            selectedValue={reason}
+            onValueChange={(itemValue) => setReason(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Select Reason" value="" />
+            {leaveReasons.map((leaveItem, index) => (
+              <Picker.Item key={index} label={leaveItem.Reason} value={leaveItem.ReasonId} />
+            ))}
+          </Picker>
+        </View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Remark</Text>
           <TextInput
@@ -380,7 +454,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     backgroundColor: '#fff',
-    color:"black"
+    color: "black",
   },
   input: {
     borderWidth: 1,

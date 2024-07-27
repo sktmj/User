@@ -210,7 +210,7 @@ const saveLeaveRequest = async () => {
         <View style={styles.formGroup}>
           <Text style={styles.label}>Reason</Text>
           <TextInput
-            style={styles.input}
+            style={styles.input}    
             placeholder="Enter Reason"
             multiline
             numberOfLines={2}

@@ -5,8 +5,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Outpass = () => {
- 
-
   const [leaveType, setLeaveType] = useState('');
   const [returnType, setReturnType] = useState('');
   const [remark, setRemark] = useState('');

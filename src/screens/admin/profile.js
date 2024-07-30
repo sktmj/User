@@ -1,23 +1,78 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet, Image, ScrollView,SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, Image, ScrollView, SafeAreaView} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 const Profile = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState(null);
+  const[profileDetails,setProfileDetails]=useState([])
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+  useEffect(() => {
+    if (token) {
+      fetchUserDetails(token);
+     
+    }
+  }, [token]);
+  const checkAuthentication = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem('EmployeeId');
+     
+
+      if (!storedToken) {
+        console.log(
+          'User is not authenticated. Redirecting to login screen...',
+        );
+        Navigation.navigate('Login');
+      } else {
+        console.log('User is authenticated.');
+        setIsLoggedIn(true);
+        setToken(storedToken); // Assuming you need to use EmployeeId as token or for display purposes.
+        // Assuming you need to use FactoryId.
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error.message);
+    }
+  };
+
+
+  const fetchUserDetails = async (token) => {
+    try {
+      const response = await axios.get('http://10.0.2.2:3000/api/v2/pro/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.success) {
+        setProfileDetails(response.data.data[0]);
+      } else {
+        console.error('Failed to fetch profile details');
+      }
+    } catch (error) {
+      console.error('Error fetching profile details:', error.message);
+    }
+  };
+  
+
   return (
     <SafeAreaView contentContainerStyle={styles.container}>
-    <ScrollView >
-  <Image source={require('../../assets/mini.jpg')} style={styles.profileImage} />
-      
-      {/* source={{ uri: 'https://example.com/your-profile-image.jpg' }} */}
+    <ScrollView>
+      <Image source={require('../../assets/mini.jpg')} style={styles.profileImage} />
+
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Biometric Code :</Text>
-        <Text style={styles.infoText}>1615</Text>
+        <Text style={styles.input}>{profileDetails.BiometricCode || ''}</Text>
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Date of Birth :</Text>
         <TextInput
           style={styles.input}
-          value="12/11/1999"
+          value={profileDetails.DateofBirth || ''}
           editable={false}
         />
       </View>
@@ -25,18 +80,20 @@ const Profile = () => {
         <Text style={styles.label}>Date of Joining :</Text>
         <TextInput
           style={styles.input}
-          value="18/03/2024"
+          value={profileDetails.DateofJoining || ''}
           editable={false}
         />
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Employee Name :</Text>
-        <Text style={styles.infoText}>AJAY BANU T / JUNIOR SOFTWARE DEVELOPER</Text>
+        <Text style={styles.input}>
+          {profileDetails.Name || ''} / {profileDetails.DesignationName || ''}
+        </Text>
       </View>
       <View style={styles.infoContainer}>
         <TextInput
-          style={styles.inputWithIcon}
-          value="9496852007"
+          style={styles.input}
+          value={profileDetails.MobileNo || ''}
           editable={false}
         />
         <Icon name="phone" size={24} style={styles.icon} />
@@ -45,16 +102,14 @@ const Profile = () => {
         <Text style={styles.label}>Father/Guardian Name :</Text>
         <TextInput
           style={styles.input}
-          value="Chandra Banu"
+          value={profileDetails.FatherName || ''}
           editable={false}
         />
-
       </View>
-
       <View style={styles.infoContainer}>
         <TextInput
           style={styles.inputWithIcon}
-          value="9496852007"
+          value={profileDetails.alternatemobileno || ''}
           editable={false}
         />
         <Icon name="phone" size={24} style={styles.icon} />
@@ -63,13 +118,14 @@ const Profile = () => {
         <Text style={styles.label}>Spouse Name :</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter Spouse Name"
+          value={profileDetails.SpouseName || ''}
+          editable={false}
         />
       </View>
       <View style={styles.infoContainer}>
         <TextInput
           style={styles.inputWithIcon}
-          value="9496852007"
+          value={profileDetails.SpouseMobileNo || ''}
           editable={false}
         />
         <Icon name="phone" size={24} style={styles.icon} />
@@ -78,19 +134,21 @@ const Profile = () => {
         <Text style={styles.label}>Mother Name :</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter Mother Name"
+          value={profileDetails.MotherName || ''}
+          editable={false}
         />
       </View>
       <View style={styles.infoContainer}>
         <TextInput
-          style={styles.inputWithIcon}
-          value="9496852007"
+        style={styles.input}
+          
+          value={profileDetails.MotherMobileNo || ''}
           editable={false}
         />
         <Icon name="phone" size={24} style={styles.icon} />
       </View>
     </ScrollView>
-    </SafeAreaView>
+  </SafeAreaView>
   );
 };
 const styles = StyleSheet.create({
@@ -126,6 +184,7 @@ const styles = StyleSheet.create({
       paddingVertical: 8,
       fontSize: 16,
       backgroundColor: '#f5f5f5',
+      color:'black'
     },
     inputWithIcon: {
       borderWidth: 1,

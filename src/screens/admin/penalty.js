@@ -276,7 +276,7 @@ const Penalty = ({ navigation }) => {
           </Text>
           </View>
           <View style={styles.employeeContainer}>
-  <Text style={styles.employeeLabel}>Employee: </Text>
+  <Text style={styles.employeeLabel}> </Text>
   <Text style={styles.employeeValue}>{employeeName}</Text>
 </View>
         <Table borderStyle={{ borderWidth: 1, borderColor: '#c8e1ff' }}>

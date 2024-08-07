@@ -38,7 +38,7 @@ const Profile = () => {
 
   const fetchUserDetails = async (token) => {
     try {
-      const response = await axios.get('http://10.0.2.2:3000/api/v2/pro/profile', {
+      const response = await axios.get('http://hrm.daivel.in:3000/api/v2/pro/profile', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -58,91 +58,119 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView contentContainerStyle={styles.container}>
-      <ScrollView>
-        <Image source={require('../../assets/mini.jpg')} style={styles.profileImage} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        <View style={styles.headerContainer}>
+          <Image source={require('../../assets/mini.jpg')} style={styles.profileImage} />
+          <Text style={styles.profileName}>{profileDetails.Name || 'User Name'}</Text>
+          <Text style={styles.profileDesignation}>{profileDetails.DesignationName || 'Designation'}</Text>
+        </View>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.label}>Biometric Code :</Text>
-          <Text style={styles.input}>{profileDetails.BiometricCode || ''}</Text>
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Date of Birth :</Text>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.DateofBirth ? formatDate(profileDetails.DateofBirth) : ''}
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Date of Joining :</Text>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.DateofJoining ? formatDate(profileDetails.DateofJoining) : ''}
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Employee Name :</Text>
-          <Text style={styles.input}>
-            {profileDetails.Name || ''} / {profileDetails.DesignationName || ''}
-          </Text>
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.MobileNo || ''}
-            editable={false}
-          />
-          <Icon name="phone" size={24} style={styles.icon} />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Father/Guardian Name :</Text>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.FatherName || ''}
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.alternatemobileno || ''}
-            editable={false}
-          />
-          <Icon name="phone" size={24} style={styles.icon} />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Spouse Name :</Text>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.SpouseName || ''}
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.SpouseMobileNo || ''}
-            editable={false}
-          />
-          <Icon name="phone" size={24} style={styles.icon} />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Mother Name :</Text>
-          <TextInput
-            style={styles.input}
-            value={profileDetails.MotherName || ''}
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-           style={styles.input}
-            value={profileDetails.MotherMobileNo || ''}
-            editable={false}
-          />
-          <Icon name="phone" size={24} style={styles.icon} />
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Biometric Code:</Text>
+            <Text style={styles.infoText}>{profileDetails.BiometricCode || ''}</Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Date of Birth:</Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails.DateofBirth ? formatDate(profileDetails.DateofBirth) : ''}
+              editable={false}
+            />
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Date of Joining:</Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails.DateofJoining ? formatDate(profileDetails.DateofJoining) : ''}
+              editable={false}
+            />
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Employee Name:</Text>
+            <Text style={styles.infoText}>
+              {profileDetails.Name || ''} / {profileDetails.DesignationName || ''}
+            </Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Mobile No:</Text>
+            <View style={styles.infoCardWithIcon}>
+              <TextInput
+                style={styles.input}
+                value={profileDetails.MobileNo || ''}
+                editable={false}
+              />
+              <Icon name="phone" size={24} style={styles.icon} />
+            </View>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Father/Guardian Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails.FatherName || ''}
+              editable={false}
+            />
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Alternate Mobile No:</Text>
+            <View style={styles.infoCardWithIcon}>
+              <TextInput
+                style={styles.input}
+                value={profileDetails.alternatemobileno || ''}
+                editable={false}
+              />
+              <Icon name="phone" size={24} style={styles.icon} />
+            </View>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Spouse Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails.SpouseName || ''}
+              editable={false}
+            />
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Spouse Mobile No:</Text>
+            <View style={styles.infoCardWithIcon}>
+              <TextInput
+                style={styles.input}
+                value={profileDetails.SpouseMobileNo || ''}
+                editable={false}
+              />
+              <Icon name="phone" size={24} style={styles.icon} />
+            </View>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Mother Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails.MotherName || ''}
+              editable={false}
+            />
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.label}>Mother Mobile No:</Text>
+            <View style={styles.infoCardWithIcon}>
+              <TextInput
+                style={styles.input}
+                value={profileDetails.MotherMobileNo || ''}
+                editable={false}
+              />
+              <Icon name="phone" size={24} style={styles.icon} />
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -151,68 +179,101 @@ const Profile = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    flex: 1,
+    backgroundColor: '#d0f2e2', // Light gray background
+  },
+  scrollView: {
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    backgroundColor: '#00796B',  // Bright Blue
+    paddingVertical: 30,
+    alignItems: 'center',
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 75,
-    alignSelf: 'center',
-    marginBottom: 16,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 6,
+    borderColor: '#fff',
+    marginBottom: 10,
+  },
+  profileName: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  profileDesignation: {
+    fontSize: 28,
+    color: '#fff', // Bright Yellow
   },
   infoContainer: {
-    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    borderLeftWidth: 5,
+    borderLeftColor: '#FF5722', // Orange accent
+  },
+  infoCardWithIcon: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   label: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '500',
+    color: '#444',
+    marginBottom: 5,
   },
   infoText: {
     fontSize: 16,
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-    backgroundColor: '#f5f5f5',
-    color: 'black',
-  },
-  inputWithIcon: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-    backgroundColor: '#f5f5f5',
-    marginBottom: 8,
+    color:    '#666',
+    marginBottom: 5,
   },
   icon: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    color: '#888',
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
   button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: '#FF5722', // Orange accent
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  input:{
+    color:"black"
+  }
 });
 
 export default Profile;

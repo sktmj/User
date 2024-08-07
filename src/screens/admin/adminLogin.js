@@ -20,7 +20,7 @@ export default function AdminLogin() {
   
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://10.0.2.2:3000/api/v2/auth/Admin", {
+      const response = await fetch("http://hrm.daivel.in:3000/api/v2/auth/Admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

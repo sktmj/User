@@ -1,236 +1,362 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  TextInput,
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import moment from 'moment';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { Table, Row, Rows } from 'react-native-table-component';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView } from 'react-native-gesture-handler';
 
-import React, { useState } from 'react';
-import './gesture-handler';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import Icon from "react-native-vector-icons/FontAwesome";
-import PersonalDetails from './src/screens/career/personalDetails';
-import AcademicDetails from './src/screens/career/academicDetails';
-import WorkExperience from './src/screens/career/experience';
-import FamilyDetails from './src/screens/career/familyDetails';
-import Other from './src/screens/career/other';
-import Uploads from './src/screens/career/uploads';
-import DeclarationComponent from './src/screens/career/declaration';
-import Login from './src/screens/career/login';
-import SignUp from './src/screens/career/signup';
-import Home from './src/screens/admin/home';
-import Profile from './src/screens/admin/profile';
-import Leave from './src/screens/admin/leave';
-import Penalty from './src/screens/admin/penalty';
-import Muster from './src/screens/admin/muster';
-import Permission from './src/screens/admin/permission';
-import Punch from './src/screens/admin/punch';
-import LeaveEntryScreen from './src/component/leaveentry';
-import Outpass from './src/screens/admin/outpass';
-import OutpassEntryScreen from './src/component/oupassEntry';
-import AdminLogin from './src/screens/admin/adminLogin';
+const Punch = ({ navigation }) => {
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [dateMode, setDateMode] = useState('from');
+  const [EmployeeId, setEmployeeId] = useState('');
+  const [token, setToken] = useState(null);
+  const [data, setData] = useState([]);
+  const [employeeName, setEmployeeName] = useState('');
 
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
 
+  useEffect(() => {
+    if (EmployeeId) {
+      fetchUserDetails(EmployeeId);
+    }
+  }, [EmployeeId]);
 
+  useEffect(() => {
+    if (token && EmployeeId && fromDate && toDate) {
+      fetchPunchData();
+    }
+  }, [token, EmployeeId, fromDate, toDate]);
 
-const Stack = createNativeStackNavigator();
-const Tab = createMaterialTopTabNavigator();
-const Drawer = createDrawerNavigator();
+  const checkAuthentication = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem('token');
+      const storedEmployeeId = await AsyncStorage.getItem('EmployeeId');
 
+      if (!storedToken || !storedEmployeeId) {
+        console.log('User is not authenticated. Redirecting to login screen...');
+        navigation.navigate('Login');
+      } else {
+        console.log('User is authenticated.');
+        setToken(storedToken);
+        setEmployeeId(JSON.parse(storedEmployeeId)); // Parse EmployeeId
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error.message);
+    }
+  };
 
-const CustomDrawerContent = ({ navigation }) => {
-  const [selectedSection, setSelectedSection] = useState('Admin');
+  const fetchUserDetails = async (token) => {
+    try {
+      const EmployeeId = await AsyncStorage.getItem('EmployeeId');
+
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/employeId/${EmployeeId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log('User Response:', response.data);
+      if (response.data.length > 0) {
+        setEmployeeName(response.data[0].Employee);
+      } else {
+        console.error('User details retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error.message);
+    }
+  };
+
+  const fetchPunchData = async () => {
+    if (!fromDate || !toDate) {
+      Alert.alert('Error', 'Please select both dates');
+      return;
+    }
+
+    const formattedFromDate = moment(fromDate).format('YYYY-MM-DD');
+    const formattedToDate = moment(toDate).format('YYYY-MM-DD');
+    console.log('FromDate:', formattedFromDate);
+    console.log('ToDate:', formattedToDate);
+    console.log('EmployeeId:', EmployeeId);
+
+    try {
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/pun/punch/${EmployeeId}`,
+        {
+          params: {
+            FromDate: formattedFromDate,
+            ToDate: formattedToDate,
+          },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('Punch Data:', response.data);
+
+      // Process data to group by PunchDate
+      const groupedData = response.data.reduce((acc, item) => {
+        const existing = acc.find(entry => entry.PunchDate === item.PunchDate);
+        if (existing) {
+          existing.rows.push(item);
+        } else {
+          acc.push({
+            PunchDate: item.PunchDate,
+            rows: [item]
+          });
+        }
+        return acc;
+      }, []);
+
+      const formattedData = groupedData.flatMap(group => {
+        return group.rows.map((item, index) => ({
+          PunchDate: index === 0 ? group.PunchDate : '',
+          PunchTime: item.PunchTime,
+          DeviceFName: item.DeviceFName
+        }));
+      });
+
+      setData(formattedData);
+
+    } catch (error) {
+      console.error('Error fetching punch data:', error.message);
+      Alert.alert(
+        'Error',
+        'Failed to fetch punch data. Please try again later.'
+      );
+    }
+  };
+
+  const showDatePicker = mode => {
+    setDateMode(mode);
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const handleConfirm = date => {
+    if (dateMode === 'from') {
+      setFromDate(date);
+    } else {
+      setToDate(date);
+    }
+    hideDatePicker();
+  };
 
   return (
-    <View style={{ flex: 1 }}>
-      <TouchableOpacity onPress={() => setSelectedSection('Admin')} style={styles.sectionHeader}>
-        <Text style={styles.sectionHeaderText}>Admin</Text>
-      </TouchableOpacity>
-      {selectedSection === 'Admin' && (
-        <>
-        
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Text style={styles.drawerItem}>Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Leave/On-Duty Entry')}>
-            <Text style={styles.drawerItem}>Leave/On-Duty Entry</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Outpass')}>
-            <Text style={styles.drawerItem}>Outpass</Text>
-          </TouchableOpacity>
-        </>
-      )}
-      <TouchableOpacity onPress={() => setSelectedSection('Report')} style={styles.sectionHeader}>
-        <Text style={styles.sectionHeaderText}>Report</Text>
-      </TouchableOpacity>
-      {selectedSection === 'Report' && (
-        <>
-          <TouchableOpacity onPress={() => navigation.navigate('Penalty-Report')}>
-            <Text style={styles.drawerItem}>Penalty Report</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Muster-Report')}>
-            <Text style={styles.drawerItem}>Muster Report</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Permission-Report')}>
-            <Text style={styles.drawerItem}>Permission Report</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Punch-Report')}>
-            <Text style={styles.drawerItem}>Punch Report</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
-  );
-};
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Employee Punch Records</Text>
+        </View>
+        <View style={styles.filters}>
+          <View style={styles.datePickerContainer}>
+            <TouchableOpacity
+              onPress={() => showDatePicker('from')}
+              style={styles.dateInput}>
+              <Icon
+                name="calendar"
+                size={20}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.dateText}>
+                {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'From Date'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => showDatePicker('to')}
+              style={styles.dateInput}>
+              <Icon
+                name="calendar"
+                size={20}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.dateText}>
+                {toDate ? moment(toDate).format('DD/MM/YYYY') : 'To Date'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-
-function DrawerScreen() {
-  return (
-    <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />}>
-   
-      <Drawer.Screen name="Profile" component={Profile} />
-      <Drawer.Screen name="Outpass" component={Outpass}/>
-      <Drawer.Screen name="Leave/On-Duty Entry" component={Leave} />
-     
-    </Drawer.Navigator>
-  );
-}
-
-
-function TabTab() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarLabelStyle: {
-          fontSize: 10, // Adjust the font size as needed
-          fontWeight: 'bold',
-          color: '#333', // Add sky blue color
-        },
-        tabBarTabStyle: {width: 20},
-
-        tabBarIndicatorStyle: {
-          backgroundColor: '#000', // Set indicator color to sky blue
-        },
-      }}>
-
-    <Tab.Screen
-  name="PersonalDetails"
-  component={PersonalDetails}
-  options={{
-    title: () => (
-      <Icon name="user-circle-o" size={24} color="black" />
-    ),
-  }}
-/>
-      <Tab.Screen
-        name="AcademicDetails"
-        component={AcademicDetails}
-        options={{
-          title:()=>(
-            <Icon name='university' size={24} color="black"/>
-          ),
-          
-        }}
-      />
-     
-      <Tab.Screen
-        name="WorkExperience"
-        component={WorkExperience}
-        options={{
-          title:()=>(
-            <Icon name='server' size={24} color="black"/>
-          ),
-          
-        }}
-      />
-      <Tab.Screen
-        name="FamilyDetails"
-        component={FamilyDetails}
-        options={{
-          title:()=>(
-            <Icon name='group' size={24} color="black"/>
-          ),
-          
-        }}
-      />
+          <TextInput
+            style={styles.input}
+            value={employeeName}
+            editable={false}
+          />
+          <TouchableOpacity style={styles.button} onPress={fetchPunchData}>
+            <Text style={styles.buttonText}>Get Punch Data</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.tableContainer}>
        
-      
-       <Tab.Screen
-        name="Other"
-        component={Other}
-        options={{
-          title:()=>(
-            <Icon name='cube' size={24} color="black"/>
-          ),
-          
-        }}
-      />
-       <Tab.Screen
-        name="uploads"
-        component={Uploads}
-        options={{
-          title:()=>(
-            <Icon name='file-photo-o' size={24} color="black"/>
-          ),
-          
-        }}
-      />
-       <Tab.Screen
-        name="Declaration"
-        component={DeclarationComponent}
-        options={{
-          title:()=>(
-            <Icon name='handshake-o' size={24} color="black"/>
-          ),
-          
-        }}
-      />
-    </Tab.Navigator>
+            <Text style={styles.reportLabel}>
+              Report from{' '}
+              {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to{' '}
+              {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
+            </Text>
     
-  );
-}
+          <View style={styles.employeeContainer}>
+            <Text style={styles.employeeName}>Employee:{employeeName}</Text>
+          </View>
+          <Table borderStyle={{ borderWidth: 1, borderColor: '#c8e1ff' }}>
+            <Row
+              data={['Punch Date', 'Punch Time', 'Device']}
+              style={styles.head}
+              textStyle={styles.textTable}
+            />
+            <Rows
+              data={data.map(item => [
+                item.PunchDate || '',
+                item.PunchTime || '',
+                item.DeviceFName || ''
+              ])}
+              textStyle={styles.text}
+            />
+          </Table>
+        </View>
 
-const App = () => {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{title:'Login', headerShown: false }}
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          date={
+            dateMode === 'from' ? fromDate || new Date() : toDate || new Date()
+          }
         />
-        <Stack.Screen
-          name="Signup"
-          component={SignUp}
-          options={{title: 'signup', headerShown: false}}
-        />
-        <Stack.Screen name="Application Form" component={TabTab} />
-        <Stack.Screen name="Admin" component={DrawerScreen}/>
-        <Stack.Screen
-          name="AdminLogin"
-          component={AdminLogin}
-          options={{title:'Login', headerShown: false }}
-        />
-      
-      </Stack.Navigator>
-    </NavigationContainer>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
-export default App
+
 const styles = StyleSheet.create({
-  sectionHeader: {
-    padding: 10,
-    backgroundColor: '#f4f4f4',
-    borderBottomWidth: 1,
-    borderBottomColor: 'green',
+  container: {
+    flex: 1,
+    backgroundColor: '#d0f2e2', // Light cyan background
   },
-  sectionHeaderText: {
+  scrollView: {
+    flexGrow: 1,
+  },
+  header: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#004D40', // Darker teal color
+  },
+  headerText: {
+    fontSize: 32,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  filters: {
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4, // Slightly lighter shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  dateInput: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#004D40',
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#00796B', // Medium teal
+  },
+  dateText: {
+    marginLeft: 10,
+    color: '#ffffff',
+    fontSize: 16,
+  },
+  icon: {
+    marginLeft: 10,
+  },
+  input: {
+    height: 45,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingLeft: 12,
+    backgroundColor: '#ffffff',
+  },
+  button: {
+    backgroundColor: '#00796B', // Teal color for the button
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2, // Add subtle shadow
+  },
+  buttonText: {
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  drawerItem: {
-    padding: 10,
-    paddingLeft: 20,
-    fontSize: 16,
+  tableContainer: {
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4,
   },
+  reportLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  employeeName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  head: {
+    backgroundColor: '#004D40',
+  },
+  text: {
+    color: 'black',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+  textTable:{
+    color: '#fff',
+    textAlign: 'center',
+    paddingVertical: 10,
+  }
 });
 
-// keytool -genkeypair -v -storetype PKCS12 -keystore signedapk.keystore -alias signedapk -keyalg RSA -keysize 2048 -validity 10000
+export default Punch;

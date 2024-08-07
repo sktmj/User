@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import moment from 'moment-timezone';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Table, Row, Rows } from 'react-native-table-component';
+import {Table, Row, Rows} from 'react-native-table-component';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-gesture-handler';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ScrollView} from 'react-native-gesture-handler';
 
-
-const Permission= ({ navigation }) => {
+const Permission = ({navigation}) => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -40,7 +46,9 @@ const Permission= ({ navigation }) => {
       const storedFactoryId = await AsyncStorage.getItem('FactoryId');
 
       if (!storedToken || !storedFactoryId) {
-        console.log('User is not authenticated. Redirecting to login screen...');
+        console.log(
+          'User is not authenticated. Redirecting to login screen...',
+        );
         navigation.navigate('Login');
       } else {
         console.log('User is authenticated.');
@@ -54,12 +62,12 @@ const Permission= ({ navigation }) => {
     }
   };
 
-  const fetchUserDetails = async (token) => {
+  const fetchUserDetails = async token => {
     try {
       const EmployeeId = await AsyncStorage.getItem('EmployeeId');
 
       const response = await axios.get(
-        `http://10.0.2.2:3000/api/v2/lve/employeId/${EmployeeId}`,
+        `http://hrm.daivel.in:3000/api/v2/lve/employeId/${EmployeeId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -78,7 +86,7 @@ const Permission= ({ navigation }) => {
     }
   };
 
-  const showDatePicker = (mode) => {
+  const showDatePicker = mode => {
     setDateMode(mode);
     setDatePickerVisibility(true);
   };
@@ -87,7 +95,7 @@ const Permission= ({ navigation }) => {
     setDatePickerVisibility(false);
   };
 
-  const handleConfirm = (date) => {
+  const handleConfirm = date => {
     if (dateMode === 'from') {
       setFromDate(date);
     } else {
@@ -110,31 +118,37 @@ const Permission= ({ navigation }) => {
     console.log('EmployeeId:', EmployeeId);
 
     try {
-      const response = await axios.get(`http://10.0.2.2:3000/api/v2/per/permission/${EmployeeId}`, {
-        params: {
-          FromDate: formattedFromDate,
-          ToDate: formattedToDate,
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/per/permission/${EmployeeId}`,
+        {
+          params: {
+            FromDate: formattedFromDate,
+            ToDate: formattedToDate,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      );
 
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error.response ? error.response.data : error.message);
+      console.error(
+        'Error fetching data:',
+        error.response ? error.response.data : error.message,
+      );
       Alert.alert('Error', 'Failed to fetch data');
     }
   };
 
   const tableHead = ['Date', 'InTime', 'OutTime'];
 
-  const formatTableData = (data) => {
-    return data.map((item) => {
+  const formatTableData = data => {
+    return data.map(item => {
       let formattedFromTime = 'Invalid Time';
       let formattedToTime = 'Invalid Time';
       let formattedDte = 'Invalid Date';
-  
+
       // Formatting the date
       if (item.Dte) {
         try {
@@ -143,7 +157,7 @@ const Permission= ({ navigation }) => {
           console.error('Error formatting Dte:', error);
         }
       }
-  
+
       // Formatting the FromTime
       if (item.FromTime) {
         try {
@@ -152,7 +166,7 @@ const Permission= ({ navigation }) => {
           console.error('Error formatting FromTime:', error);
         }
       }
-  
+
       // Formatting the ToTime
       if (item.ToTime) {
         try {
@@ -161,30 +175,44 @@ const Permission= ({ navigation }) => {
           console.error('Error formatting ToTime:', error);
         }
       }
-  
-      return [
-        formattedDte,
-        formattedFromTime,
-        formattedToTime,
-      ];
+
+      return [formattedDte, formattedFromTime, formattedToTime];
     });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Permission Report</Text>
         </View>
         <View style={styles.filters}>
           <View style={styles.datePickerContainer}>
-            <TouchableOpacity onPress={() => showDatePicker('from')} style={styles.dateInput}>
-              <Icon name="calendar" size={20} color="#666" style={styles.icon} />
-              <Text style={styles.dateText}>{fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'From Date'}</Text>
+            <TouchableOpacity
+              onPress={() => showDatePicker('from')}
+              style={styles.dateInput}>
+              <Icon
+                name="calendar"
+                size={20}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.dateText}>
+                {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'From Date'}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => showDatePicker('to')} style={styles.dateInput}>
-              <Icon name="calendar" size={20} color="#666" style={styles.icon} />
-              <Text style={styles.dateText}>{toDate ? moment(toDate).format('DD/MM/YYYY') : 'To Date'}</Text>
+            <TouchableOpacity
+              onPress={() => showDatePicker('to')}
+              style={styles.dateInput}>
+              <Icon
+                name="calendar"
+                size={20}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.dateText}>
+                {toDate ? moment(toDate).format('DD/MM/YYYY') : 'To Date'}
+              </Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -192,25 +220,26 @@ const Permission= ({ navigation }) => {
             value={employeeName}
             editable={false}
           />
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={handleSubmit}
-          >
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Generate Report</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.tableContainer}>
+          <Text style={styles.reportLabel}>
+            Report from{' '}
+            {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to{' '}
+            {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
+          </Text>
+
           <View style={styles.employeeContainer}>
-            <Text style={styles.employeeLabel}>
-              Report from {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
-            </Text>
+            <Text style={styles.employeeName}>Employee:{employeeName}</Text>
           </View>
-          <View style={styles.employeeContainer}>
-  <Text style={styles.employeeLabel}>Employee:{employeeName}</Text>
- 
-</View>
-          <Table borderStyle={{ borderWidth: 1, borderColor: '#c8e1ff' }}>
-            <Row data={tableHead} style={styles.head} textStyle={styles.text} />
+          <Table borderStyle={{borderWidth: 1, borderColor: '#c8e1ff'}}>
+            <Row
+              data={tableHead}
+              style={styles.head}
+              textStyle={styles.textTable}
+            />
             <Rows data={formatTableData(data)} textStyle={styles.text} />
           </Table>
         </View>
@@ -220,7 +249,9 @@ const Permission= ({ navigation }) => {
         mode="date"
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
-        date={dateMode === 'from' ? fromDate || new Date() : toDate || new Date()}
+        date={
+          dateMode === 'from' ? fromDate || new Date() : toDate || new Date()
+        }
       />
     </SafeAreaView>
   );
@@ -229,85 +260,108 @@ const Permission= ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#d0f2e2', // Light cyan background
+  },
+  scrollView: {
+    flexGrow: 1,
   },
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#059A5F',
+    backgroundColor: '#004D40', // Darker teal color
   },
   headerText: {
-    fontSize: 24,
-    color: '#fff',
+    fontSize: 32,
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   filters: {
     padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4, // Slightly lighter shadow
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   datePickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   dateInput: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
+    borderColor: '#004D40',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 8,
     marginRight: 10,
+    backgroundColor: '#00796B', // Medium teal
   },
   dateText: {
     marginLeft: 10,
-    color: '#666',
+    color: '#ffffff',
+    fontSize: 16,
   },
   icon: {
     marginLeft: 10,
   },
   input: {
-    height: 40,
+    height: 45,
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingLeft: 10,
-    color: 'black',
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingLeft: 12,
+    backgroundColor: '#ffffff',
+  },
+  button: {
+    backgroundColor: '#00796B', // Teal color for the button
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2, // Add subtle shadow
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   tableContainer: {
     padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4,
   },
-  head: {
-    height: 40,
-    backgroundColor: '#f1f8ff',
-  },
-  text: {
-    margin: 6,
-    color: 'black',
-  },
-  button: {
-    backgroundColor: '#059A5F',
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
+  reportLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  employeeContainer: {
     marginBottom: 10,
   },
-  employeeLabel: {
-    fontSize: 16,
+  employeeName: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    marginBottom: 20,
   },
-  employeeValue: {
-    fontSize: 16,
+  head: {
+    backgroundColor: '#004D40',
+  },
+  text: {
     color: 'black',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+  textTable: {
+    color: '#fff',
+    textAlign: 'center',
+    paddingVertical: 10,
   },
 });
 

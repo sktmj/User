@@ -58,7 +58,7 @@ const Muster = ({ navigation }) => {
       const EmployeeId = await AsyncStorage.getItem('EmployeeId');
 
       const response = await axios.get(
-        `http://10.0.2.2:3000/api/v2/lve/employeId/${EmployeeId}`,
+        `http://hrm.daivel.in:3000/api/v2/lve/employeId/${EmployeeId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const Muster = ({ navigation }) => {
     console.log('EmployeeId:', EmployeeId);
 
     try {
-      const response = await axios.get(`http://10.0.2.2:3000/api/v2/must/muster/${EmployeeId}`, {
+      const response = await axios.get(`http://hrm.daivel.in:3000/api/v2/must/muster/${EmployeeId}`, {
         params: {
           FromDate: formattedFromDate,
           ToDate: formattedToDate,
@@ -149,18 +149,18 @@ const Muster = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Muster Report</Text>
         </View>
         <View style={styles.filters}>
           <View style={styles.datePickerContainer}>
             <TouchableOpacity onPress={() => showDatePicker('from')} style={styles.dateInput}>
-              <Icon name="calendar" size={20} color="#666" style={styles.icon} />
+              <Icon name="calendar" size={20} color="#fff" style={styles.icon} />
               <Text style={styles.dateText}>{fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'From Date'}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => showDatePicker('to')} style={styles.dateInput}>
-              <Icon name="calendar" size={20} color="#666" style={styles.icon} />
+              <Icon name="calendar" size={20} color="#fff" style={styles.icon} />
               <Text style={styles.dateText}>{toDate ? moment(toDate).format('DD/MM/YYYY') : 'To Date'}</Text>
             </TouchableOpacity>
           </View>
@@ -177,17 +177,17 @@ const Muster = ({ navigation }) => {
           </TouchableOpacity>
         </View>
         <View style={styles.tableContainer}>
+       
+      <Text style={styles.reportLabel}>
+            Report from {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
+          </Text>
+        
           <View style={styles.employeeContainer}>
-            <Text style={styles.employeeLabel}>
-              Report from {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
-            </Text>
-          </View>
-          <View style={styles.employeeContainer}>
-  <Text style={styles.employeeLabel}>Employee:{employeeName}</Text>
- 
+  
+  <Text style={styles.employeeName}>{employeeName}</Text>
 </View>
           <Table borderStyle={{ borderWidth: 1, borderColor: '#c8e1ff' }}>
-            <Row data={tableHead} style={styles.head} textStyle={styles.text} />
+            <Row data={tableHead} style={styles.head} textStyle={styles.textTable} />
             <Rows data={formatTableData(data)} textStyle={styles.text} />
           </Table>
         </View>
@@ -206,86 +206,109 @@ const Muster = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#d0f2e2', // Light cyan background
+  },
+  scrollView: {
+    flexGrow: 1,
   },
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#059A5F',
+    backgroundColor: '#004D40', // Darker teal color
   },
   headerText: {
-    fontSize: 24,
-    color: '#fff',
+    fontSize: 32,
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   filters: {
     padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4, // Slightly lighter shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   datePickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   dateInput: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
+    borderColor: '#004D40',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 8,
     marginRight: 10,
+    backgroundColor: '#00796B', // Medium teal
   },
   dateText: {
     marginLeft: 10,
-    color: '#666',
+    color: '#ffffff',
+    fontSize: 16,
   },
   icon: {
     marginLeft: 10,
   },
   input: {
-    height: 40,
+    height: 45,
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingLeft: 10,
-    color: 'black',
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingLeft: 12,
+    backgroundColor: '#ffffff',
+  },
+  button: {
+    backgroundColor: '#00796B', // Teal color for the button
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2, // Add subtle shadow
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   tableContainer: {
     padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    elevation: 4,
   },
-  head: {
-    height: 40,
-    backgroundColor: '#f1f8ff',
-  },
-  text: {
-    margin: 6,
-    color: 'black',
-  },
-  button: {
-    backgroundColor: '#059A5F',
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
+  reportLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  employeeContainer: {
     marginBottom: 10,
   },
-  employeeLabel: {
-    fontSize: 16,
+  employeeName: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    marginBottom: 20,
   },
-  employeeValue: {
-    fontSize: 16,
-    color: 'black',
+  head: {
+    backgroundColor: '#004D40',
   },
+  text: {
+    color: 'black',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+  textTable:{
+    color: '#fff',
+    textAlign: 'center',
+    paddingVertical: 10,
+  }
 });
 
 export default Muster;

@@ -1,36 +1,191 @@
-// LeaveEntryScreen.js
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const LeaveEntryScreen = () => {
-  const organizations = ['Org1', 'Org2', 'Org3'];
-  const employees = ['Employee1', 'Employee2', 'Employee3'];
-  const requestTo = ['Manager1', 'Manager2', 'Manager3'];
-  const modes = ['Mode1', 'Mode2', 'Mode3'];
-  const leaveTypes = ['Sick Leave', 'Vacation', 'Maternity Leave'];
-  const priorities = ['High', 'Medium', 'Low'];
-  const returnTypes = ['Email', 'Hard Copy'];
-  const handOverTo = ['Colleague1', 'Colleague2', 'Colleague3'];
-  const reasons = ['Reason1', 'Reason2', 'Reason3'];
+const Leaveentry = () => {
+  const Navigation = useNavigation();
 
-  const [organisation, setOrganisation] = useState('');
-  const [employee, setEmployee] = useState('');
-  const [requestToValue, setRequestToValue] = useState('');
   const [mode, setMode] = useState('');
   const [leaveType, setLeaveType] = useState('');
   const [priority, setPriority] = useState('');
   const [returnType, setReturnType] = useState('');
-  const [handOverToValue, setHandOverToValue] = useState('');
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const [handOver, setHandOver] = useState([]);
+  const [selectHandOver, setSelectHandOver] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [isFromDatePickerVisible, setFromDatePickerVisibility] = useState(false);
   const [isToDatePickerVisible, setToDatePickerVisibility] = useState(false);
   const [reason, setReason] = useState('');
+  const [leaveReasons, setLeaveReasons] = useState([]);
   const [remark, setRemark] = useState('');
   const [documentUri, setDocumentUri] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState(null);
+  const [requestToNames, setRequestToNames] = useState([]);
+  const [tokenFactoryId, setTokenFactoryId] = useState(null);
+  const [employeeName, setEmployeeName] = useState('');
+  const [organisation, setOrganisation] = useState('');
+  const [selectedRequestTo, setSelectedRequestTo] = useState('');
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchUserDetails(token);
+      fetchOrganisationDetails(token);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (tokenFactoryId) {
+      fetchRequestDetails(tokenFactoryId);
+      fetchHandOver(tokenFactoryId);
+    }
+  }, [tokenFactoryId]);
+
+  useEffect(() => {
+    getLeave();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem('EmployeeId');
+      const storedFactoryId = await AsyncStorage.getItem('FactoryId');
+
+      if (!storedToken || !storedFactoryId) {
+        console.log('User is not authenticated. Redirecting to login screen...');
+        Navigation.navigate('Login');
+      } else {
+        console.log('User is authenticated.');
+        setIsLoggedIn(true);
+        setToken(storedToken);
+        setTokenFactoryId(storedFactoryId);
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error.message);
+    }
+  };
+
+  const fetchOrganisationDetails = async token => {
+    try {
+      const EmployeeId = await AsyncStorage.getItem('EmployeeId');
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/organistionId/${EmployeeId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      console.log('Organisation Response:', response.data);
+      if (response.data.length > 0) {
+        setOrganisation(response.data[0].Factory);
+      } else {
+        console.error('User organisation retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching user organisation:', error.message);
+    }
+  };
+
+  const fetchUserDetails = async token => {
+    try {
+      const EmployeeId = await AsyncStorage.getItem('EmployeeId');
+
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/employeId/${EmployeeId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      console.log('User Response:', response.data);
+      if (response.data.length > 0) {
+        setEmployeeName(response.data[0].Employee);
+      } else {
+        console.error('User details retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error.message);
+    }
+  };
+
+  const fetchRequestDetails = async tokenFactoryId => {
+    const FactoryId = await AsyncStorage.getItem('FactoryId');
+    try {
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/request/${FactoryId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokenFactoryId}`,
+          },
+        },
+      );
+      console.log('Request Details Response:', response.data);
+      if (response.data.length > 0) {
+        setRequestToNames(response.data);
+      } else {
+        console.error('Request names retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching request names:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const fetchHandOver = async tokenFactoryId => {
+    const FactoryId = await AsyncStorage.getItem('FactoryId');
+    try {
+      const response = await axios.get(
+        `http://hrm.daivel.in:3000/api/v2/lve/request/${FactoryId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokenFactoryId}`,
+          },
+        },
+      );
+      console.log('Hand Over Response:', response.data);
+      if (response.data.length > 0) {
+        setHandOver(response.data);
+      } else {
+        console.error('Hand Over names retrieval failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching hand over names:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const getLeave = async () => {
+    try {
+      const response = await axios.get(
+        'http://hrm.daivel.in:3000/api/v2/lve/getleave',
+      );
+      console.log('Fetched Leave Reasons:', response.data);
+      setLeaveReasons(response.data);
+    } catch (error) {
+      console.error('Error fetching leave reasons:', error);
+    }
+  };
 
   const pickDocument = async () => {
     try {
@@ -47,8 +202,47 @@ const LeaveEntryScreen = () => {
     }
   };
 
-  const saveLeaveRequest = () => {
-    console.log('Leave request saved!');
+  const saveLeaveRequest = async () => {
+    try {
+      const token = await AsyncStorage.getItem('EmployeeId'); // Replace 'Token' with your actual token key
+
+      const formData = {
+        TrnDate: new Date().toISOString().split('T')[0], // Current date
+        TrnMode: mode,
+        ReturnSts: returnType,
+        ModeType: mode,
+        HandOverTo: selectHandOver,
+        RequestTo: selectedRequestTo,
+        Priority: priority,
+        LeaveType: leaveType,
+        FromDate: fromDate,
+        ToDate: toDate,
+        Reason: reason,
+        Remarks: remark,
+        UserId: await AsyncStorage.getItem('EmployeeId'),
+        ApproveStatus: 'N',
+      };
+
+      const response = await axios.post(
+        'http://hrm.daivel.in:3000/api/v2/lve/inserLeave',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.data.success) {
+        alert('Leave request submitted successfully!');
+      } else {
+        alert('Failed to submit leave request: ' + response.data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting leave request:', error);
+      alert('Error submitting leave request: ' + error.message);
+    }
   };
 
   const showFromDatePicker = () => {
@@ -59,7 +253,7 @@ const LeaveEntryScreen = () => {
     setFromDatePickerVisibility(false);
   };
 
-  const handleFromDateConfirm = (date) => {
+  const handleFromDateConfirm = date => {
     setFromDate(date.toISOString().split('T')[0]);
     hideFromDatePicker();
   };
@@ -72,261 +266,263 @@ const LeaveEntryScreen = () => {
     setToDatePickerVisibility(false);
   };
 
-  const handleToDateConfirm = (date) => {
+  const handleToDateConfirm = date => {
     setToDate(date.toISOString().split('T')[0]);
     hideToDatePicker();
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>Leave Request Form</Text>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Organisation</Text>
-        <Picker
-          selectedValue={organisation}
-          onValueChange={(itemValue) => setOrganisation(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Organisation" value="" />
-          {organizations.map((org, index) => (
-            <Picker.Item key={index} label={org} value={org} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Employee</Text>
-        <Picker
-          selectedValue={employee}
-          onValueChange={(itemValue) => setEmployee(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Employee" value="" />
-          {employees.map((emp, index) => (
-            <Picker.Item key={index} label={emp} value={emp} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Request To</Text>
-        <Picker
-          selectedValue={requestToValue}
-          onValueChange={(itemValue) => setRequestToValue(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Request To" value="" />
-          {requestTo.map((to, index) => (
-            <Picker.Item key={index} label={to} value={to} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Mode</Text>
-        <Picker
-          selectedValue={mode}
-          onValueChange={(itemValue) => setMode(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Mode" value="" />
-          {modes.map((m, index) => (
-            <Picker.Item key={index} label={m} value={m} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Leave Type</Text>
-        <Picker
-          selectedValue={leaveType}
-          onValueChange={(itemValue) => setLeaveType(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Leave Type" value="" />
-          {leaveTypes.map((type, index) => (
-            <Picker.Item key={index} label={type} value={type} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Priority</Text>
-        <Picker
-          selectedValue={priority}
-          onValueChange={(itemValue) => setPriority(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Priority" value="" />
-          {priorities.map((p, index) => (
-            <Picker.Item key={index} label={p} value={p} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Return Type</Text>
-        <Picker
-          selectedValue={returnType}
-          onValueChange={(itemValue) => setReturnType(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Return Type" value="" />
-          {returnTypes.map((type, index) => (
-            <Picker.Item key={index} label={type} value={type} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Hand Over To</Text>
-        <Picker
-          selectedValue={handOverToValue}
-          onValueChange={(itemValue) => setHandOverToValue(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Hand Over To" value="" />
-          {handOverTo.map((to, index) => (
-            <Picker.Item key={index} label={to} value={to} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>From Date</Text>
-        <TouchableOpacity onPress={showFromDatePicker} style={styles.dateButton}>
-          <Text style={styles.dateText}>
-            {fromDate ? fromDate : 'Select From Date'}
-          </Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <Text style={styles.heading}>Leave Request Form</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Employee</Text>
+          <TextInput
+            style={styles.input}
+            value={employeeName}
+            editable={false}
+          />
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Organisation</Text>
+          <TextInput
+            style={styles.input}
+            value={organisation}
+            editable={false}
+          />
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Request TO</Text>
+          <Picker
+            selectedValue={selectedRequestTo}
+            onValueChange={itemValue => setSelectedRequestTo(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Select Request To" value="" />
+            {requestToNames.map(employee => (
+              <Picker.Item
+                key={employee.EmployeeId}
+                label={employee.Employee}
+                value={employee.EmployeeId}
+              />
+            ))}
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Return Type</Text>
+          <Picker
+            selectedValue={returnType}
+            onValueChange={itemValue => setReturnType(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Non Return" value="N" />
+            <Picker.Item label="Return" value="R" />
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Mode Type</Text>
+          <Picker
+            selectedValue={mode}
+            onValueChange={itemValue => setMode(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Leave" value="L" />
+            <Picker.Item label="Permission" value="P" />
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Leave Type</Text>
+          <Picker
+            selectedValue={leaveType}
+            onValueChange={itemValue => setLeaveType(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Full Day" value="F" />
+            <Picker.Item label="Morning" value="M" />
+            <Picker.Item label="Afternoon" value="A" />
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Priority</Text>
+          <Picker
+            selectedValue={priority}
+            onValueChange={itemValue => setPriority(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Normal" value="N" />
+            <Picker.Item label="Urgent" value="U" />
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Hand Over To</Text>
+          <Picker
+            selectedValue={selectHandOver}
+            onValueChange={itemValue => setSelectHandOver(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Select Hand Over To" value="" />
+            {handOver.map(employee => (
+              <Picker.Item
+                key={employee.EmployeeId}
+                label={employee.Employee}
+                value={employee.EmployeeId}
+              />
+            ))}
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>From Date</Text>
+          <TouchableOpacity onPress={showFromDatePicker}>
+            <TextInput
+              style={styles.input}
+              placeholder="Select From Date"
+              value={fromDate}
+              editable={false}
+            />
+          </TouchableOpacity>
+          <DateTimePickerModal
+            isVisible={isFromDatePickerVisible}
+            mode="date"
+            onConfirm={handleFromDateConfirm}
+            onCancel={hideFromDatePicker}
+          />
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>To Date</Text>
+          <TouchableOpacity onPress={showToDatePicker}>
+            <TextInput
+              style={styles.input}
+              placeholder="Select To Date"
+              value={toDate}
+              editable={false}
+            />
+          </TouchableOpacity>
+          <DateTimePickerModal
+            isVisible={isToDatePickerVisible}
+            mode="date"
+            onConfirm={handleToDateConfirm}
+            onCancel={hideToDatePicker}
+          />
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Reason</Text>
+          <Picker
+            selectedValue={reason}
+            onValueChange={itemValue => setReason(itemValue)}
+            style={styles.picker}>
+            <Picker.Item label="Select Reason" value="" />
+            {leaveReasons.map((leaveItem, index) => (
+              <Picker.Item
+                key={index}
+                label={leaveItem.Reason}
+                value={leaveItem.ReasonId}
+              />
+            ))}
+          </Picker>
+        </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Remark</Text>
+          <TextInput
+            style={styles.input}
+            value={remark}
+            onChangeText={setRemark}
+            placeholder="Enter Remark"
+          />
+        </View>
+        {/* <View style={styles.formGroup}>
+          <Text style={styles.label}>Document</Text>
+          <TouchableOpacity
+            onPress={pickDocument}
+            style={styles.documentButton}>
+            <Text style={styles.documentButtonText}>Select Document</Text>
+          </TouchableOpacity>
+          {documentUri && <Text style={styles.selectedDocument}>Selected Document: {documentUri}</Text>}
+        </View> */}
+        <TouchableOpacity
+          onPress={saveLeaveRequest}
+          style={styles.submitButton}>
+          <Text style={styles.submitButtonText}>Submit</Text>
         </TouchableOpacity>
-        <DateTimePickerModal
-          isVisible={isFromDatePickerVisible}
-          mode="date"
-          onConfirm={handleFromDateConfirm}
-          onCancel={hideFromDatePicker}
-        />
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>To Date</Text>
-        <TouchableOpacity onPress={showToDatePicker} style={styles.dateButton}>
-          <Text style={styles.dateText}>
-            {toDate ? toDate : 'Select To Date'}
-          </Text>
-        </TouchableOpacity>
-        <DateTimePickerModal
-          isVisible={isToDatePickerVisible}
-          mode="date"
-          onConfirm={handleToDateConfirm}
-          onCancel={hideToDatePicker}
-        />
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Reason</Text>
-        <Picker
-          selectedValue={reason}
-          onValueChange={(itemValue) => setReason(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Reason" value="" />
-          {reasons.map((r, index) => (
-            <Picker.Item key={index} label={r} value={r} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Remark</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Remark"
-          multiline
-          numberOfLines={3}
-          value={remark}
-          onChangeText={(text) => setRemark(text)}
-        />
-      </View>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Leave Approval Image</Text>
-        <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
-          <Text style={styles.buttonText}>Upload Document</Text>
-        </TouchableOpacity>
-        {documentUri && <Text style={styles.documentName}>{documentUri}</Text>}
-      </View>
-      <TouchableOpacity style={styles.saveButton} onPress={saveLeaveRequest}>
-        <Text style={styles.buttonText}>Save Request</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#d0f2e2',
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+  },
+  scrollViewContent: {
+    paddingBottom: 20,
   },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
+    color: 'black',
     marginBottom: 20,
-    color: '#333',
+    textAlign: 'center',
+    fontFamily: 'Roboto',
   },
   formGroup: {
-    marginBottom: 15,
+    marginBottom: 20,
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
-    color: '#333',
+    fontWeight: 'bold',
+    color: 'black',
+    marginBottom: 8,
   },
   picker: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginBottom: 10,
-    backgroundColor: '#f0f0f0',
-  },
-  dateButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#f0f0f0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 16,
-    color: '#333',
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: '#fafafa',
+    color:"BLACK"
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: '#fff',
     fontSize: 16,
-    backgroundColor: '#f0f0f0',
+    color: '#333',
   },
-  uploadButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+  documentButton: {
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 10,
+    marginVertical: 10,
   },
-  saveButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
+  documentButtonText: {
     color: '#fff',
     fontSize: 16,
   },
-  documentName: {
-    fontSize: 14,
-    marginTop: 5,
-    color: '#666',
+  selectedDocument: {
+    marginTop: 10,
+    color: '#333',
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: '#00796B',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
-export default LeaveEntryScreen;
+export default Leaveentry;

@@ -236,7 +236,7 @@ const Outpass = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#d0f2e2',
+    backgroundColor: '#090920',
     paddingHorizontal: 20,
     paddingVertical: 30,
   },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'black',
+    color: '#fff',
     marginBottom: 20,
     textAlign: 'center',
     fontFamily: 'Roboto',
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   submitButton: {
-    backgroundColor: '#00796B',
+    backgroundColor: '#059A5F',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',

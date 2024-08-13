@@ -1,6 +1,6 @@
 // HomeScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ScrollView, SafeAreaView } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { PieChart } from 'react-native-chart-kit';
 import { Table, Row, Rows } from 'react-native-table-component';
@@ -55,7 +55,8 @@ const Home = () => {
   };
 
   return (
-    <ScrollView style={styles.scrollContainer}>
+    <SafeAreaView style={styles.scrollContainer}>
+    <ScrollView >
       <View style={styles.container}>
         <View style={styles.pickerRow}>
           <View style={styles.pickerContainer}>
@@ -105,6 +106,8 @@ const Home = () => {
         </View>
       </View>
     </ScrollView>
+    </SafeAreaView>
+    
   );
 };
 

@@ -27,6 +27,7 @@ import Punch from './src/screens/admin/punch';
 import Leaveentry from './src/component/leaveentry';
 import Payslip from './src/screens/admin/paySlip';
 import bank from './src/screens/admin/bank';
+import Home from './src/screens/admin/home';
 
 
 
@@ -49,6 +50,9 @@ const CustomDrawerContent = ({ navigation }) => {
   </TouchableOpacity>
   {selectedSection === 'Admin' && (
     <>
+       <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+        <Text style={[styles.drawerItem, styles.drawerItemLast]}>Home</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
         <Text style={[styles.drawerItem, styles.drawerItemLast]}>Profile</Text>
       </TouchableOpacity>
@@ -98,7 +102,7 @@ const CustomDrawerContent = ({ navigation }) => {
 function DrawerScreen() {
   return (
     <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />}>
-   
+   <Drawer.Screen name="Home" component={Home} />
       <Drawer.Screen name="Profile" component={Profile} />
       <Drawer.Screen name="Outpass" component={Outpass}/>
       <Drawer.Screen name="Leave Entry" component={Leaveentry} />
@@ -238,7 +242,7 @@ export default App
 const styles = StyleSheet.create({
   sectionHeader: {
     padding: 15,
-    backgroundColor: '#d0f2e2',
+    backgroundColor: '#059A5F',
     borderBottomWidth: 2,
     borderBottomColor: '#a29bfe', // Slightly darker shade for better contrast
     borderRadius: 5, // Rounded corners
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     fontSize: 20, // Slightly larger font size
     fontWeight: 'bold',
-    color: 'black', // Darker text color for better readability
+    color: 'white', // Darker text color for better readability
   },
   drawerItem: {
     padding: 15,

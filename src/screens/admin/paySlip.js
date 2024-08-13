@@ -226,13 +226,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#d0f2e2',
+    backgroundColor: '#090920',
   },
   header: {
     padding: 16,
-    backgroundColor: '#00796B',
+    backgroundColor: '#090920',
     borderBottomWidth: 4,
-    borderBottomColor: '#004D40',
+    borderBottomColor: '#090920',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

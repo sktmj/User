@@ -168,7 +168,7 @@ const Punch = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Employee Punch Records</Text>
+          <Text style={styles.headerText}> Punch Records</Text>
         </View>
         <View style={styles.filters}>
           <View style={styles.datePickerContainer}>
@@ -254,7 +254,7 @@ const Punch = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#d0f2e2', // Light cyan background
+    backgroundColor: '#090920', // Light cyan background
   },
   scrollView: {
     flexGrow: 1,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#004D40', // Darker teal color
+    backgroundColor: '#090920', // Darker teal color
   },
   headerText: {
     fontSize: 32,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginRight: 10,
-    backgroundColor: '#00796B', // Medium teal
+    backgroundColor: '#059A5F', // Medium teal
   },
   dateText: {
     marginLeft: 10,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   button: {
-    backgroundColor: '#00796B', // Teal color for the button
+    backgroundColor: '#059A5F', // Teal color for the button
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   head: {
-    backgroundColor: '#004D40',
+    backgroundColor: '#059A5F',
   },
   text: {
     color: 'black',

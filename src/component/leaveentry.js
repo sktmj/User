@@ -7,6 +7,9 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  Button,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DocumentPicker from 'react-native-document-picker';
@@ -32,6 +35,7 @@ const Leaveentry = () => {
   const [leaveReasons, setLeaveReasons] = useState([]);
   const [remark, setRemark] = useState('');
   const [documentUri, setDocumentUri] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
   const [requestToNames, setRequestToNames] = useState([]);
@@ -187,20 +191,7 @@ const Leaveentry = () => {
     }
   };
 
-  const pickDocument = async () => {
-    try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-      });
-      setDocumentUri(res.uri);
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('Document picker cancelled');
-      } else {
-        console.log('Error picking document:', err);
-      }
-    }
-  };
+ 
 
   const saveLeaveRequest = async () => {
     try {
@@ -270,6 +261,69 @@ const Leaveentry = () => {
     setToDate(date.toISOString().split('T')[0]);
     hideToDatePicker();
   };
+
+
+  const handleChooseDocument = async () => {
+    try {
+      const res = await DocumentPicker.pick({
+        type: [DocumentPicker.types.images],
+      });
+      if (res && res.length > 0) {
+        const source = res[0].uri;
+        setDocumentUri(source);
+      }
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('User cancelled document picker');
+      } else {
+        console.error('DocumentPicker Error:', err.message);
+        Alert.alert('Error', 'Failed to choose document');
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!documentUri) {
+      Alert.alert('Error', 'Please select a file to upload.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('LeaveImage', {
+        uri: documentUri,
+        type: 'image/jpeg', // Adjust the type as needed based on your file
+        name: `${new Date().toISOString().split('T')[0]}.jpg`, // You can use a default name or derive it dynamically
+      });
+
+      const response = await axios.post(
+        `http://hrm.daivel.in:3000/api/v2/lve/leavepic/${await AsyncStorage.getItem('EmployeeId')}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${await AsyncStorage.getItem('EmployeeId')}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        console.log('File uploaded successfully');
+        Alert.alert('Success', 'File uploaded successfully');
+      } else {
+        console.error('Upload failed:', response.data.message);
+        Alert.alert('Error', 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error.message);
+      Alert.alert('Error', 'Upload error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -423,15 +477,16 @@ const Leaveentry = () => {
             placeholder="Enter Remark"
           />
         </View>
-        {/* <View style={styles.formGroup}>
-          <Text style={styles.label}>Document</Text>
-          <TouchableOpacity
-            onPress={pickDocument}
-            style={styles.documentButton}>
-            <Text style={styles.documentButtonText}>Select Document</Text>
-          </TouchableOpacity>
-          {documentUri && <Text style={styles.selectedDocument}>Selected Document: {documentUri}</Text>}
-        </View> */}
+        <View style={styles.formGroup}>
+          <Button title="Choose File" onPress={handleChooseDocument} />
+          {documentUri && <Text>Selected File: {documentUri}</Text>}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Button title="Upload File" onPress={handleUpload} />
+          {loading && <ActivityIndicator size="small" color="#0000ff" />}
+        </View>
+
         <TouchableOpacity
           onPress={saveLeaveRequest}
           style={styles.submitButton}>
@@ -445,7 +500,7 @@ const Leaveentry = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#d0f2e2',
+    backgroundColor: '#090920',
     paddingHorizontal: 20,
     paddingVertical: 30,
   },
@@ -455,7 +510,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
     marginBottom: 20,
     textAlign: 'center',
     fontFamily: 'Roboto',
@@ -512,7 +567,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#00796B',
+    backgroundColor: '#059A5F',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',

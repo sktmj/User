@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center', // Center vertically
     alignItems: 'center', // Center horizontally
-    backgroundColor: '#d0f2e2',
+    backgroundColor: '#090920',
   },
   loader: {
     flex: 1,

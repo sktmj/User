@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, Image, ScrollView, SafeAreaView } fr
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import moment from 'moment';  // Import moment for date formatting
+import moment from 'moment';
 
 const Profile = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,11 +25,11 @@ const Profile = () => {
       const storedToken = await AsyncStorage.getItem('EmployeeId');
       if (!storedToken) {
         console.log('User is not authenticated. Redirecting to login screen...');
-        Navigation.navigate('Login');
+        // Navigation.navigate('Login');
       } else {
         console.log('User is authenticated.');
         setIsLoggedIn(true);
-        setToken(storedToken); // Assuming you need to use EmployeeId as token or for display purposes.
+        setToken(storedToken);
       }
     } catch (error) {
       console.error('Error checking authentication:', error.message);
@@ -54,7 +54,7 @@ const Profile = () => {
   };
 
   const formatDate = (dateString) => {
-    return moment(dateString).format('DD/MM/YYYY');
+    return moment.utc(dateString).format('DD/MM/YYYY');
   };
 
   return (
@@ -180,13 +180,13 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#d0f2e2', // Light gray background
+    backgroundColor: '#090920', // Premium light gray background
   },
   scrollView: {
     paddingBottom: 20,
   },
   headerContainer: {
-    backgroundColor: '#00796B',  // Bright Blue
+    backgroundColor: '#090920',  // Dark Navy
     paddingVertical: 30,
     alignItems: 'center',
     borderBottomLeftRadius: 40,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   profileDesignation: {
     fontSize: 28,
-    color: '#fff', // Bright Yellow
+    color: '#fff', // Light Gray
   },
   infoContainer: {
     paddingHorizontal: 20,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     borderLeftWidth: 5,
-    borderLeftColor: '#FF5722', // Orange accent
+    borderLeftColor: '#FF8E8F', // Blue accent
   },
   infoCardWithIcon: {
     backgroundColor: '#FFFFFF',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 16,
-    color:    '#666',
+    color: '#666',
     marginBottom: 5,
   },
   icon: {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   button: {
-    backgroundColor: '#FF5722', // Orange accent
+    backgroundColor: '#007BFF', // Blue accent
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,

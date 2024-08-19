@@ -208,6 +208,8 @@ const Leaveentry = () => {
         LeaveType: leaveType,
         FromDate: fromDate,
         ToDate: toDate,
+        FromTime:FromTime,
+        ToTime:ToTime,
         Reason: reason,
         Remarks: remark,
         UserId: await AsyncStorage.getItem('EmployeeId'),
@@ -346,7 +348,7 @@ const Leaveentry = () => {
           />
         </View>
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Request TO</Text>
+          <Text style={styles.label}>Request To</Text>
           <Picker
             selectedValue={selectedRequestTo}
             onValueChange={itemValue => setSelectedRequestTo(itemValue)}
@@ -378,7 +380,8 @@ const Leaveentry = () => {
             onValueChange={itemValue => setMode(itemValue)}
             style={styles.picker}>
             <Picker.Item label="Leave" value="L" />
-            <Picker.Item label="Permission" value="P" />
+            <Picker.Item label="Personal" value="P" />
+            <Picker.Item label="Official" value="O" />
           </Picker>
         </View>
         <View style={styles.formGroup}>

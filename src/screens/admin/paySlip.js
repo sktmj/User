@@ -144,7 +144,7 @@ const Payslip = ({ navigation }) => {
             <Text style={styles.cardTitle}>Employee Information</Text>
             {renderInfoRow('Name', payslipData[0]?.Name)}
             {renderInfoRow('ECNO', payslipData[0]?.BioMetricCode)}
-            {renderInfoRow('Department', payslipData[0]?.DesignationName)}
+            {renderInfoRow('Designation', payslipData[0]?.DesignationName)}
             {renderInfoRow('Date Of Joining', formatDate(payslipData[0]?.DateofJoining))}
             {renderInfoRow('Bank', payslipData[0]?.BankName)}
             {renderInfoRow('Acc NO', payslipData[0]?.AccountNo)}

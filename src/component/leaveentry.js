@@ -43,6 +43,11 @@ const Leaveentry = () => {
   const [employeeName, setEmployeeName] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [selectedRequestTo, setSelectedRequestTo] = useState('');
+  const [fromTime, setFromTime] = useState('');
+const [toTime, setToTime] = useState('');
+const [isFromTimePickerVisible, setFromTimePickerVisibility] = useState(false);
+const [isToTimePickerVisible, setToTimePickerVisibility] = useState(false);
+
 
   useEffect(() => {
     checkAuthentication();
@@ -196,7 +201,7 @@ const Leaveentry = () => {
   const saveLeaveRequest = async () => {
     try {
       const token = await AsyncStorage.getItem('EmployeeId'); // Replace 'Token' with your actual token key
-
+      const currentDate = new Date().toISOString().split('T')[0];
       const formData = {
         TrnDate: new Date().toISOString().split('T')[0], // Current date
         TrnMode: mode,
@@ -208,14 +213,14 @@ const Leaveentry = () => {
         LeaveType: leaveType,
         FromDate: fromDate,
         ToDate: toDate,
-        FromTime:FromTime,
-        ToTime:ToTime,
+        FromTime: `${currentDate}T${fromTime}`,
+        ToTime: `${currentDate}T${toTime}`,
         Reason: reason,
         Remarks: remark,
         UserId: await AsyncStorage.getItem('EmployeeId'),
         ApproveStatus: 'N',
       };
-
+      console.log('Form Data:', formData);
       const response = await axios.post(
         'http://hrm.daivel.in:3000/api/v2/lve/inserLeave',
         formData,
@@ -263,8 +268,18 @@ const Leaveentry = () => {
     setToDate(date.toISOString().split('T')[0]);
     hideToDatePicker();
   };
-
-
+  const handleFromTimeConfirm = (time) => {
+    const hours = time.getHours().toString().padStart(2, '0');
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    setFromTime(`${hours}:${minutes}:00`); // Format time as HH:mm:ss
+    setFromTimePickerVisibility(false);
+};
+const handleToTimeConfirm = (time) => {
+  const hours = time.getHours().toString().padStart(2, '0');
+  const minutes = time.getMinutes().toString().padStart(2, '0');
+  setToTime(`${hours}:${minutes}:00`); // Format time as HH:mm:ss
+  setToTimePickerVisibility(false);
+};
   const handleChooseDocument = async () => {
     try {
       const res = await DocumentPicker.pick({
@@ -380,8 +395,8 @@ const Leaveentry = () => {
             onValueChange={itemValue => setMode(itemValue)}
             style={styles.picker}>
             <Picker.Item label="Leave" value="L" />
-            <Picker.Item label="Personal" value="P" />
-            <Picker.Item label="Official" value="O" />
+            <Picker.Item label="Permission" value="P" />
+            <Picker.Item label="Weakoff" value="W" />
           </Picker>
         </View>
         <View style={styles.formGroup}>
@@ -393,6 +408,7 @@ const Leaveentry = () => {
             <Picker.Item label="Full Day" value="F" />
             <Picker.Item label="Morning" value="M" />
             <Picker.Item label="Afternoon" value="A" />
+            <Picker.Item label="Timing" value="T"/>
           </Picker>
         </View>
         <View style={styles.formGroup}>
@@ -455,6 +471,42 @@ const Leaveentry = () => {
             onCancel={hideToDatePicker}
           />
         </View>
+        <View style={styles.formGroup}>
+  <Text style={styles.label}>From Time</Text>
+  <TouchableOpacity onPress={() => setFromTimePickerVisibility(true)}>
+    <TextInput
+      style={styles.input}
+      placeholder="Select From Time"
+      value={fromTime}
+      editable={false}
+    />
+  </TouchableOpacity>
+  <DateTimePickerModal
+    isVisible={isFromTimePickerVisible}
+    mode="time"
+    onConfirm={handleFromTimeConfirm}
+    onCancel={() => setFromTimePickerVisibility(false)}
+  />
+</View>
+
+<View style={styles.formGroup}>
+  <Text style={styles.label}>To Time</Text>
+  <TouchableOpacity onPress={() => setToTimePickerVisibility(true)}>
+    <TextInput
+      style={styles.input}
+      placeholder="Select To Time"
+      value={toTime}
+      editable={false}
+    />
+  </TouchableOpacity>
+  <DateTimePickerModal
+    isVisible={isToTimePickerVisible}
+    mode="time"
+    onConfirm={handleToTimeConfirm}
+    onCancel={() => setToTimePickerVisibility(false)}
+  />
+</View>
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Reason</Text>
           <Picker

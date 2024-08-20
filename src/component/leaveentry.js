@@ -233,13 +233,13 @@ const [isToTimePickerVisible, setToTimePickerVisibility] = useState(false);
       );
 
       if (response.data.success) {
-        alert('Leave request submitted successfully!');
+        Alert('Leave request submitted successfully!');
       } else {
-        alert('Failed to submit leave request: ' + response.data.message);
+        Alert('Failed to submit leave request: ' + response.data.message);
       }
     } catch (error) {
       console.error('Error submitting leave request:', error);
-      alert('Error submitting leave request: ' + error.message);
+      Alert('Error submitting leave request: ' + error.message);
     }
   };
 

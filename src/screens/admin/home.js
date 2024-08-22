@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { Table, Row, Rows } from 'react-native-table-component';
@@ -14,6 +15,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -47,15 +49,12 @@ const Home = () => {
   const navigation = useNavigation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
-  const [tableHead] = useState(["#", "Date", "InTime", "OutTime"]);
   const [tableData, setTableData] = useState([]);
-  const [entryHead] = useState(["#", "Date", "InTime", "OutTime"]);
-  const [entryData, setEntryData] = useState([]);
   const [chartData, setChartData] = useState([]);
-  const [selectedSegment, setSelectedSegment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth()); // Default to current month
   const [EmployeeId, setEmployeeId] = useState(null);
+  const [selectedSegment, setSelectedSegment] = useState(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -92,166 +91,157 @@ const Home = () => {
 
     // Split selectedMonth into year and month
     const [year, month] = selectedMonth.split('-');
-    
+
     // Calculate startDate (29th of the previous month)
     const prevMonth = month === '01' ? '12' : (parseInt(month, 10) - 1).toString().padStart(2, '0');
     const prevYear = month === '01' ? (parseInt(year, 10) - 1).toString() : year;
     const startDate = new Date(prevYear, prevMonth - 1, 29);
-    
+
     // Calculate endDate (28th of the selected month)
     const endDate = new Date(year, month - 1, 28);
-  
+
     // Format dates as YYYY-MM-DD
     const formattedStartDate = `${startDate.getFullYear()}-${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${startDate.getDate().toString().padStart(2, '0')}`;
     const formattedEndDate = `${endDate.getFullYear()}-${(endDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}`;
-  
+
     try {
       const response = await axios.get(`http://hrm.daivel.in:3000/api/v2/hm/home/${EmployeeId}`, {
-        params: { StDate: formattedStartDate, EndDate: formattedEndDate },
-        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          StDate: formattedStartDate,
+          EndDate: formattedEndDate,
+        },
       });
-  
+
       const data = response.data;
-  
-      if (Array.isArray(data) && data.length > 0) {
-        const totalPresent = data.reduce((acc, item) => acc + (item.Present || 0), 0);
-        const totalAbsent = data.reduce((acc, item) => acc + (item.Absent || 0), 0);
-        const totalLeave = data.reduce((acc, item) => acc + (item.Leave || 0), 0);
-        const totalOnDuty = data.reduce((acc, item) => acc + (item.OnDuty || 0), 0);
-        const totalWeekOff = data.reduce((acc, item) => acc + (item.WeekOff || 0), 0);
-        const totalHoliday = data.reduce((acc, item) => acc + (item.Holiday || 0), 0);
-  
-        setChartData([
-          { name: 'Present', population: totalPresent, color: '#FF6384', legendFontColor: '#fff', legendFontSize: 15 },
-          { name: 'Absent', population: totalAbsent, color: '#36A2EB', legendFontColor: '#fff', legendFontSize: 15 },
-          { name: 'Leave', population: totalLeave, color: '#FFCE56', legendFontColor: '#fff', legendFontSize: 15 },
-          { name: 'OnDuty', population: totalOnDuty, color: '#4BC0C0', legendFontColor: '#fff', legendFontSize: 15 },
-          { name: 'WeekOff', population: totalWeekOff, color: '#9966FF', legendFontColor: '#fff', legendFontSize: 15 },
-          { name: 'Holiday', population: totalHoliday, color: '#FF9F40', legendFontColor: '#fff', legendFontSize: 15 },
-        ]);
-  
-        const formattedTableData = data.map((item, index) => ([
-          `${index + 1}`,
-          item.Date || 'N/A',
-          item.InTime || 'N/A',
-          item.OutTime || 'N/A'
-        ]));
-        setTableData(formattedTableData);
-        setEntryData(formattedTableData);
-      } else {
-        setChartData([]);
-        setTableData([]);
-        setEntryData([]);
-      }
+
+      // Process chart data
+      const total = data.reduce((acc, item) => acc + item.Present + item.Absent + item.Leave + item.OnDuty + item.WeekOff + item.Holiday, 0);
+
+      const chartData = [
+        { name: 'Present', count: data.reduce((acc, item) => acc + item.Present, 0), color: '#FF6384', legendFontColor: '#fff', legendFontSize: 15  },
+        { name: 'Absent', count: data.reduce((acc, item) => acc + item.Absent, 0), color: '#36A2EB', legendFontColor: '#fff', legendFontSize: 15 },
+        { name: 'Leave', count: data.reduce((acc, item) => acc + item.Leave, 0), color: '#FFCE56', legendFontColor: '#fff', legendFontSize: 15  },
+        { name: 'OnDuty', count: data.reduce((acc, item) => acc + item.OnDuty, 0), color: '#4BC0C0', legendFontColor: '#fff', legendFontSize: 15 },
+        { name: 'WeekOff', count: data.reduce((acc, item) => acc + item.WeekOff, 0), color: '#9966FF', legendFontColor: '#fff', legendFontSize: 15  },
+        { name: 'Holiday', count: data.reduce((acc, item) => acc + item.Holiday, 0), color: '#FF9F40', legendFontColor: '#fff', legendFontSize: 15 },
+      ];
+
+      setChartData(chartData);
+      setTableData(data);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error('Error fetching attendance data:', error.message);
+      Alert.alert('Error', 'Failed to fetch data. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to generate month options for the picker with month names
-  const generateMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    const year = today.getFullYear();
-    const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
-    
-    for (let i = 1; i <= 12; i++) {
-      const month = i.toString().padStart(2, '0');
-      const label = getMonthNames().find(m => m.value === month).label;
-      const value = `${year}-${month}`;
-      options.push({ label: label, value: value });
-    }
-    return options;
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
   };
 
-  const handleMonthChange = (value) => {
-    setSelectedMonth(value);
+  const formatChartData = () => {
+    return chartData.map(item => ({
+      name: item.name,
+      count: item.count,
+      color: item.color,
+      legendFontColor: item.legendFontColor,
+      legendFontSize: 15,
+    }));
   };
-
   const handlePieSegmentClick = (data) => {
-    setSelectedSegment(data);
+    console.log('Segment clicked:', data);
+    setSelectedSegment({
+      name: data.name,
+      count: data.count,
+    });
   };
+  
 
   return (
     <SafeAreaView style={styles.scrollContainer}>
-      <ScrollView>
-        <View style={styles.container}>
-          <View style={styles.pickerRow}>
-            <View style={styles.pickerContainer}>
-              <Text style={styles.label}>Month</Text>
-              <Picker
-                selectedValue={selectedMonth}
-                style={styles.picker}
-                onValueChange={handleMonthChange}
-              >
-                {generateMonthOptions().map(option => (
-                  <Picker.Item key={option.value} label={option.label} value={option.value} />
-                ))}
-              </Picker>
+      <View style={styles.container}>
+      <Text style={styles.tableTitle}>Dashboard</Text>
+        <View style={styles.pickerRow}>
+        <View style={styles.pickerWrapper}>
+  <Text style={styles.label}>Month</Text>
+  <View style={styles.pickerContainer}>
+    <Picker
+      selectedValue={selectedMonth}
+      style={styles.picker}
+      onValueChange={(itemValue) => handleMonthChange(itemValue)}
+    >
+      {getMonthNames().map((item) => (
+        <Picker.Item key={item.value} label={item.label} value={`${new Date().getFullYear()}-${item.value}`} />
+      ))}
+    </Picker>
+  </View>
+</View>
+</View>
+        {loading ? (
+          <ActivityIndicator size="large" color="red" />
+        ) : (
+          <>
+            <View style={styles.chartContainer}>
+            
+            <PieChart
+  data={formatChartData()}
+  width={screenWidth - 40}
+  height={220}
+  chartConfig={{
+    backgroundColor: '#090920',
+    backgroundGradientFrom: '#090920',
+    backgroundGradientTo: '#090920',
+    decimalPlaces: 2,
+    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForLabels: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
+  }}
+  accessor="count"
+  backgroundColor="transparent"
+  paddingLeft="15"
+  center={[10, 10]}
+  absolute
+  onPress={(data) => handlePieSegmentClick(data)}
+/>
+
+              {selectedSegment && (
+                <View style={styles.segmentInfo}>
+                  <Text style={styles.segmentText}>Name: {selectedSegment.name}</Text>
+                  <Text style={styles.segmentText}>Value: {selectedSegment.count}</Text>
+                </View>
+              )}
             </View>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator size="large" color="red" />
-          ) : (
-            <>
-              <View style={{ alignItems: 'center' }}>
-                <PieChart
-                  data={chartData}
-                  width={screenWidth - 40}
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: '#090920',
-                    backgroundGradientFrom: '#090920',
-                    backgroundGradientTo: '#090920',
-                    decimalPlaces: 2,
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    style: {
-                      borderRadius: 16,
-                    },
-                    propsForLabels: {
-                      fontSize: 15,
-                      fontWeight: 'bold',
-                      color: '#fff',
-                    },
-                  }}
-                  accessor="population"
-                  backgroundColor="transparent"
-                  paddingLeft="15"
-                  center={[10, 10]}
-                  absolute
-                  onPress={(data) => handlePieSegmentClick(data)}
-                />
-                {selectedSegment && (
-                  <View style={styles.segmentInfo}>
-                    <Text style={styles.segmentText}>Name: {selectedSegment.name}</Text>
-                    <Text style={styles.segmentText}>Value: {selectedSegment.population}</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.tableContainer}>
-                <Text style={styles.tableTitle}>Attendance Overview</Text>
-                <Table borderStyle={styles.borderStyle}>
-                  <Row data={tableHead} style={styles.head} textStyle={styles.text} />
-                  <Rows data={tableData} textStyle={styles.text} />
-                </Table>
-              </View>
-
+            <ScrollView>
               <View style={styles.tableContainer}>
                 <Text style={styles.tableTitle}>Entry Data</Text>
                 <Table borderStyle={styles.borderStyle}>
-                  <Row data={entryHead} style={styles.head} textStyle={styles.text} />
-                  <Rows data={entryData} textStyle={styles.text} />
+                  <Row
+                    data={['Date', 'InTime', 'OutTime']}
+                    style={styles.head}
+                    textStyle={styles.text}
+                  />
+                  <Rows
+                    data={tableData.map(item => [
+                      item.AttDate,
+                      item.InTime,
+                      item.OutTime,
+                    ])}
+                    textStyle={styles.text}
+                  />
                 </Table>
               </View>
-            </>
-          )}
-        </View>
-      </ScrollView>
+            </ScrollView>
+          </>
+        )}
+      </View>
     </SafeAreaView>
   );
 };
@@ -259,79 +249,81 @@ const Home = () => {
 const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#090920', // Background color
   },
   container: {
     flex: 1,
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
+    backgroundColor: '#090920',
   },
   pickerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
     marginBottom: 20,
+     color:"white"
   },
   pickerContainer: {
-    flex: 1,
+    borderColor: 'white',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginHorizontal: 5,
-    backgroundColor: '#fff',
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    width: '100%', // Adjust width as needed
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  pickerWrapper: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   picker: {
     height: 50,
     width: '100%',
+    color: 'white',
+    backgroundColor: '#059A5F',
   },
-  label: {
+  chartContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  segmentInfo: {
+    marginTop: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    backgroundColor: 'red',
+  },
+  segmentText: {
     fontSize: 16,
-    marginBottom: 5,
-    color: '#090920', // Heading color
-    fontWeight: 'bold',
+    color: 'white',
   },
   tableContainer: {
     marginTop: 20,
-    width: '100%',
+    backgroundColor: '#090920',
+    borderRadius: 8,
+    padding: 10,
   },
   tableTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#fff', // Table title color
-  },
-  borderStyle: {
-    borderWidth: 2,
-    borderColor: '#ccc', // Border color
+    color:"white"
   },
   head: {
     height: 40,
-    backgroundColor: '#1a1a1a', // Table header color
+    backgroundColor: '#059A5F',
   },
   text: {
     margin: 6,
-    color: '#fff', // Table text color
+    fontSize: 14,
+    color:"white"
   },
-  segmentInfo: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#1a1a1a', // Segment info background color
-    borderRadius: 5,
+  borderStyle: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-  },
-  segmentText: {
-    fontSize: 16,
-    color: '#fff', // Segment text color
-    marginBottom: 5,
+    borderColor: '#C1C0B9',
   },
 });
 

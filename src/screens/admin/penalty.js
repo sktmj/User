@@ -254,20 +254,24 @@ const Penalty = ({ navigation }) => {
               <Text style={styles.dateText}>{toDate ? moment(toDate).format('DD/MM/YYYY') : 'To Date'}</Text>
             </TouchableOpacity>
           </View>
+          <View style={styles.input}>
           <Picker
             selectedValue={reportType}
-            style={styles.picker}
+            style={styles.dateTextt}
             onValueChange={(itemValue) => setReportType(itemValue)}
           >
             <Picker.Item label="Daily Wise" value="dailywise" />
             <Picker.Item label="Summary Wise" value="summary" />
             <Picker.Item label="Others" value="other" />
           </Picker>
+          </View>
+          <View style={styles.input}>
           <TextInput
-            style={styles.input}
+            style={styles.text}
             value={employeeName}
             editable={false}
           />
+          </View>
           <TouchableOpacity 
             style={[styles.button, reportType === 'summary' ? styles.buttonSummary : reportType === 'other' ? styles.buttonOther : styles.buttonDefault]}
             onPress={reportType === 'summary' ? handleSubmitSummery : reportType === 'other' ? handleSubmitOthers : handleSubmit}
@@ -275,16 +279,19 @@ const Penalty = ({ navigation }) => {
             <Text style={styles.buttonText}>Generate Report</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.tableContainer}>
-          <Text style={styles.reportLabel}>
+        <View style={styles.input}>
+          <Text style={styles.text}>
             Report from {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
           </Text>
-          <Text style={styles.employeeName}>{employeeName}</Text>
+          </View>
+          <View style={styles.input}>
+          <Text style={styles.text}>{employeeName}</Text>
+          </View>
           <Table borderStyle={{ borderWidth: 1, borderColor: '#c8e1ff' }}>
             <Row data={tableHead} style={styles.head} textStyle={styles.textTable} />
             <Rows data={formatTableData(data)} textStyle={styles.text} />
           </Table>
-        </View>
+       
       </ScrollView>
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
@@ -311,12 +318,12 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 32,
-    color: '#ffffff',
+    color: 'white',
     fontWeight: 'bold',
   },
   filters: {
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
     borderRadius: 10,
     margin: 10,
     elevation: 4, // Slightly lighter shadow
@@ -334,7 +341,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#03aed2',
+    borderColor: 'white',
     borderWidth: 1,
     padding: 12,
     borderRadius: 8,
@@ -343,7 +350,14 @@ const styles = StyleSheet.create({
   },
   dateText: {
     marginLeft: 10,
-    color: '#ffffff',
+    color: 'white',
+    fontSize: 16,
+  },
+  dateTextt: {
+    marginLeft: 120,
+    textAlign: 'center',
+    paddingVertical: 10,
+    color: 'white',
     fontSize: 16,
   },
   icon: {
@@ -356,7 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     paddingLeft: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
   },
   button: {
     backgroundColor: '#059A5F', // Teal color for the button
@@ -368,13 +382,13 @@ const styles = StyleSheet.create({
     elevation: 2, // Add subtle shadow
   },
   buttonText: {
-    color: '#ffffff',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
   tableContainer: {
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
     borderRadius: 10,
     margin: 10,
     elevation: 4,
@@ -393,15 +407,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#059A5F',
   },
   text: {
-    color: 'black',
+    color: 'white',
     textAlign: 'center',
     paddingVertical: 10,
   },
   textTable:{
-    color: '#fff',
+    color: 'white',
     textAlign: 'center',
     paddingVertical: 10,
   }
 });
+
 
 export default Penalty;

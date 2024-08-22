@@ -215,24 +215,26 @@ const Permission = ({navigation}) => {
               </Text>
             </TouchableOpacity>
           </View>
+          <View style={styles.input}>
           <TextInput
-            style={styles.input}
+            style={styles.text}
             value={employeeName}
             editable={false}
           />
+          </View>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Generate Report</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.tableContainer}>
-          <Text style={styles.reportLabel}>
+        <View style={styles.input}>
+          <Text style={styles.text}>
             Report from{' '}
             {fromDate ? moment(fromDate).format('DD/MM/YYYY') : 'N/A'} to{' '}
             {toDate ? moment(toDate).format('DD/MM/YYYY') : 'N/A'}
           </Text>
-
-          <View style={styles.employeeContainer}>
-            <Text style={styles.employeeName}>Employee:{employeeName}</Text>
+          </View>
+          <View style={styles.input}>
+            <Text style={styles.text}>Employee:{employeeName}</Text>
           </View>
           <Table borderStyle={{borderWidth: 1, borderColor: '#c8e1ff'}}>
             <Row
@@ -242,7 +244,7 @@ const Permission = ({navigation}) => {
             />
             <Rows data={formatTableData(data)} textStyle={styles.text} />
           </Table>
-        </View>
+        
       </ScrollView>
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
@@ -272,17 +274,17 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 32,
-    color: '#ffffff',
+    color: 'white',
     fontWeight: 'bold',
   },
   filters: {
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
     borderRadius: 10,
     margin: 10,
     elevation: 4, // Slightly lighter shadow
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
@@ -295,7 +297,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#004D40',
+    borderColor: 'white',
     borderWidth: 1,
     padding: 12,
     borderRadius: 8,
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     marginLeft: 10,
-    color: '#ffffff',
+    color: 'white',
     fontSize: 16,
   },
   icon: {
@@ -317,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     paddingLeft: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
   },
   button: {
     backgroundColor: '#059A5F', // Teal color for the button
@@ -329,13 +331,13 @@ const styles = StyleSheet.create({
     elevation: 2, // Add subtle shadow
   },
   buttonText: {
-    color: '#ffffff',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
   tableContainer: {
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#090920',
     borderRadius: 10,
     margin: 10,
     elevation: 4,
@@ -354,15 +356,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#059A5F',
   },
   text: {
-    color: 'black',
+    color: 'white',
     textAlign: 'center',
     paddingVertical: 10,
   },
-  textTable: {
-    color: '#fff',
+  textTable:{
+    color: 'white',
     textAlign: 'center',
     paddingVertical: 10,
-  },
+  }
 });
 
 export default Permission;
